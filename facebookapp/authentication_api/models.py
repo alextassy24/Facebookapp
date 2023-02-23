@@ -1,6 +1,6 @@
+from django.contrib.auth.hashers import check_password as auth_check_password
 from djongo import models
 
-# Create your models here.
 class NewUser(models.Model):
     email = models.EmailField(unique=True)
     phone_number = models.CharField(max_length=11)
@@ -8,3 +8,6 @@ class NewUser(models.Model):
     last_name = models.CharField(max_length=30)
     password = models.CharField(max_length=30)
     date_joined = models.DateField(auto_now_add=True)
+
+    def check_password(self, password):
+        return auth_check_password(password, self.password)
