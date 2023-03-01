@@ -37,9 +37,10 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'djongo',
     'rest_framework',
     'rest_framework.authtoken',
+    'corsheaders',
+    'knox',
     'authentication_api',
     'chat_api',
     'friend_api',
@@ -56,7 +57,14 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
+    'django.middleware.common.CommonMiddleware',
 ]
+
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000", # add the URL of your React app here
+]
+
 
 ROOT_URLCONF = 'facebookapp.urls'
 
@@ -79,26 +87,29 @@ TEMPLATES = [
 WSGI_APPLICATION = 'facebookapp.wsgi.application'
 
 
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': ('knox.auth.TokenAuthentication',),
+    'DEFAULT_CACHE_BACKEND': 'django.core.cache.backends.dummy.DummyCache',
+}
+
+
 # Database
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
 
 DATABASES = {
     'default': {
-        'ENGINE': 'djongo',
-        'NAME': 'facebook',
-        'HOST': 'localhost',
-        'PORT': 27017,
-    },
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
 }
 
 
 # Password validation
 # https://docs.djangoproject.com/en/4.1/ref/settings/#auth-password-validators
 
-AUTHENTICATION_BACKENDS = [
-    'authentication_api.backends.EmailBackend',
-    'django.contrib.auth.backends.ModelBackend',
-]
+AUTH_USER_MODEL = 'authentication_api.Account'
+
+AUTHENTICATION_BACKENDS = [    'django.contrib.auth.backends.ModelBackend',]
 
 AUTH_PASSWORD_VALIDATORS = [
     {

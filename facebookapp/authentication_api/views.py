@@ -1,17 +1,18 @@
-from django.http import response
-from django.core.exceptions import ValidationError
-from django.db import IntegrityError, DatabaseError
-from django.http import JsonResponse
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 from django.contrib.auth.hashers import make_password, check_password
+from django.contrib.auth.backends import ModelBackend
+from django.core.exceptions import ObjectDoesNotExist
+from django.views.decorators.csrf import csrf_exempt
 from rest_framework import status
 from rest_framework.response import Response
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework.serializers import Serializer
 from rest_framework.authtoken.models import Token
+from rest_framework.permissions import AllowAny
 from .models import NewUser
 from .serializers import NewUserSerializer
+
 
 @api_view(['GET'])
 def getRoutes(request):
@@ -38,35 +39,38 @@ def getRoutes(request):
     return Response(routes)
 
 @api_view(['POST'])
+@permission_classes([AllowAny])
 def register(request):
-    email = request.data.get('email')
-    password = request.data.get('password')
     serializer = NewUserSerializer(data=request.data)
-    if serializer.is_valid() and not NewUser.objects.filter(email=email).exists():
-        user = serializer.save(password=make_password(password))
-        return Response({
-            'status': 'Account created successfully!',
-        })
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data, status=201)
     else:
-        errors = {}
-        for field, errors_list in serializer.errors.items():
-            errors[field] = errors_list[0]
-        return Response({'errors': errors}, status=status.HTTP_400_BAD_REQUEST)  
-    
+        print("Serializer Errors:", serializer.errors)
+        errors = serializer.errors
+        if 'email' in errors:
+            email_errors = errors['email']
+            if 'A user with that email already exists.' in email_errors:
+                return Response({'detail': 'A user with that email already exists.'}, status=400)
+        return Response(errors, status=400)
+
 @api_view(['POST'])
 def login_view(request):
     email = request.data.get('email')
     password = request.data.get('password')
+
     if not email or not password:
         return Response({'status': 'Email and password are required.'}, status=400)
-    #de verificat parola cu hashing, si daca corespunde emailul
-    user = authenticate(request=request, username=email, password=password)
-    
+
+    user = authenticate(request=request, email=email, password=password, backend='authentication_api.views.EmailBackend')
+
     if not user:
         return Response({'status': 'Invalid email or password.'}, status=401)
+
     if request.user.is_authenticated:
         return Response({'status': 'User is already logged in.'})
-    login(request, user)
+
+    login(request, user, backend='authentication_api.views.EmailBackend')
     return Response({'status': 'Login successful.'})
 
 @api_view(['POST'])
