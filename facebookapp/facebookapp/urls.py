@@ -18,10 +18,10 @@ from django.urls import path, include
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('authentication_api/', include('authentication_api.urls')),
-    path('chat_api/', include('chat_api.urls')),
-    path('friend_api/', include('friend_api.urls')),
-    path('group_api/', include('group_api.urls')),
-    path('post_api/', include('post_api.urls')),
-    path('user_api/', include('user_api.urls')),
+    path('authentication-api/', include('authentication_api.urls')),
+    path('chat-api/', include('chat_api.urls')),
+    path('friend-api/', include('friend_api.urls')),
+    path('group-api/', include('group_api.urls')),
+    path('post-api/', include('post_api.urls')),
+    path('user-api/', include('user_api.urls')),
 ]
